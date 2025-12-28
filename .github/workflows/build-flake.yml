@@ -1,0 +1,47 @@
+name: Build Nix Flake
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+
+jobs:
+  build-and-store:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Install Nix
+      # This action sets up Nix and enables flakes automatically
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v8
+
+      # 3. Build the Flake
+      # This builds the 'default' package in your flake.
+      # Change '.#default' to '.#yourPackageName' if needed.
+      - name: Build Flake
+        run: nix build .#default
+
+      # 4. Prepare Output for Upload
+      # Nix builds result in a symlink named 'result' pointing to /nix/store.
+      # GitHub Artifacts cannot upload the symlink directly because the
+      # /nix/store path won't exist on the machine where you download the artifact.
+      # We use 'cp -rL' (copy recursive, dereference links) to copy the actual files.
+      - name: Copy build output
+        run: |
+          mkdir -p build-output
+          cp -rL result/initramfs.cpio build-output/
+
+      # 5. Store the Output
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake-build-output
+          path: build-output/
