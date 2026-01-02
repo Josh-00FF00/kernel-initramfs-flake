@@ -73,7 +73,7 @@
           # Determine QEMU binary based on architecture
           qemuBinary = if system == "aarch64-linux" then "qemu-system-aarch64" else "qemu-system-x86_64";
 
-          qemuFlags = "-nographic -append 'console=ttyS0,earlyprintk,nokaslr' -m 512M";
+          qemuFlags = "-nographic -append 'console=ttyS0 earlyprintk nokaslr no_hash_pointers' -m 512M";
         in
         {
           default = {
